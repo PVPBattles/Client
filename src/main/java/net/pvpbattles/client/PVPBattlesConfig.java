@@ -1,13 +1,18 @@
 package net.pvpbattles.client;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ServerInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Properties;
+import java.util.Set;
 
 public final class PVPBattlesConfig {
     public static boolean modEnabled = true;
@@ -16,10 +21,63 @@ public final class PVPBattlesConfig {
     public static boolean crystalOptimizerEnabled = true;
     public static boolean anchorOptimizerEnabled = true;
 
+    /** Optimizer を止めるサーバーのアドレス (小文字、ポートなし) */
+    public static final Set<String> disabledServers = new LinkedHashSet<>();
+
     private PVPBattlesConfig() {}
 
     private static Path file() {
         return FabricLoader.getInstance().getConfigDir().resolve("pvpbattles.properties");
+    }
+
+    private static String normalize(String address) {
+        String a = address.trim().toLowerCase(Locale.ROOT);
+        int idx = a.lastIndexOf(':');
+        if (idx > 0 && a.substring(idx + 1).matches("\\d+")) {
+            a = a.substring(0, idx);
+        }
+        return a;
+    }
+
+    /** 今つないでいるサーバーのアドレス。マルチプレイでなければ null */
+    public static String currentServerAddress() {
+        ServerInfo info = MinecraftClient.getInstance().getCurrentServerEntry();
+        if (info == null || info.address == null) {
+            return null;
+        }
+        return normalize(info.address);
+    }
+
+    private static boolean matches(String current, String entry) {
+        return current.equals(entry) || current.endsWith("." + entry);
+    }
+
+    /** 今のサーバーで Optimizer を止める設定になっているか */
+    public static boolean isServerBlocked() {
+        String current = currentServerAddress();
+        if (current == null) {
+            return false;
+        }
+        for (String entry : disabledServers) {
+            if (matches(current, entry)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 今のサーバーの止める/止めないを切り替える。サーバーにつないでいないときは何もしない */
+    public static void toggleCurrentServerBlocked() {
+        String current = currentServerAddress();
+        if (current == null) {
+            return;
+        }
+        if (isServerBlocked()) {
+            disabledServers.removeIf(entry -> matches(current, entry));
+        } else {
+            disabledServers.add(current);
+        }
+        save();
     }
 
     public static void load() {
@@ -35,6 +93,14 @@ public final class PVPBattlesConfig {
             logoEnabled = Boolean.parseBoolean(props.getProperty("logoEnabled", "true"));
             crystalOptimizerEnabled = Boolean.parseBoolean(props.getProperty("crystalOptimizerEnabled", "true"));
             anchorOptimizerEnabled = Boolean.parseBoolean(props.getProperty("anchorOptimizerEnabled", "true"));
+
+            disabledServers.clear();
+            for (String part : props.getProperty("disabledServers", "").split(",")) {
+                String entry = part.trim();
+                if (!entry.isEmpty()) {
+                    disabledServers.add(normalize(entry));
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,6 +113,7 @@ public final class PVPBattlesConfig {
         props.setProperty("logoEnabled", Boolean.toString(logoEnabled));
         props.setProperty("crystalOptimizerEnabled", Boolean.toString(crystalOptimizerEnabled));
         props.setProperty("anchorOptimizerEnabled", Boolean.toString(anchorOptimizerEnabled));
+        props.setProperty("disabledServers", String.join(",", disabledServers));
         try (OutputStream out = Files.newOutputStream(file())) {
             props.store(out, "PVPBattles");
         } catch (IOException e) {
