@@ -1,60 +1,123 @@
 package net.pvpbattles.client;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ServerInfo;
 
-public class PVPBattlesClient implements ClientModInitializer {
-    private static final int BUTTON_WIDTH = 200;
-    private static final int BUTTON_HEIGHT = 20;
-    private static final int GAP = 4;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.Set;
 
-    @Override
-    public void onInitializeClient() {
-        PVPBattlesConfig.load();
-        PVPBattlesKeybinds.register();
-        PVPBattlesCrystalOptimizer.register();
-        PVPBattlesAnchorOptimizer.register();
+public final class PVPBattlesConfig {
+    public static boolean modEnabled = true;
+    public static boolean blurEnabled = true;
+    public static boolean logoEnabled = true;
+    public static boolean crystalOptimizerEnabled = true;
+    public static boolean anchorOptimizerEnabled = true;
 
-        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            ScreenEvents.beforeRender(screen).register((s, context, mouseX, mouseY, delta) ->
-                    PVPBattlesBlur.apply(s, context));
+    /** Optimizer を止めるサーバーのアドレス (小文字、ポートなし) */
+    public static final Set<String> disabledServers = new LinkedHashSet<>();
 
-            ScreenEvents.afterRender(screen).register((s, context, mouseX, mouseY, delta) ->
-                    PVPBattlesOverlay.render(context, s.width, s.height));
+    private PVPBattlesConfig() {}
 
-            if (screen instanceof TitleScreen) {
-                addTitleButton(screen, scaledWidth, scaledHeight);
-            }
-        });
+    private static Path file() {
+        return FabricLoader.getInstance().getConfigDir().resolve("pvpbattles.properties");
     }
 
-    private static void addTitleButton(Screen screen, int width, int height) {
-        int left = width / 2 - BUTTON_WIDTH / 2;
-        int right = left + BUTTON_WIDTH;
+    private static String normalize(String address) {
+        String a = address.trim().toLowerCase(Locale.ROOT);
+        int idx = a.lastIndexOf(':');
+        if (idx > 0 && a.substring(idx + 1).matches("\\d+")) {
+            a = a.substring(0, idx);
+        }
+        return a;
+    }
 
-        int bottom = -1;
-        for (ClickableWidget w : Screens.getButtons(screen)) {
-            boolean inCenterColumn = w.getX() < right && w.getX() + w.getWidth() > left;
-            if (inCenterColumn) {
-                bottom = Math.max(bottom, w.getY() + w.getHeight());
+    /** 今つないでいるサーバーのアドレス。マルチプレイでなければ null */
+    public static String currentServerAddress() {
+        ServerInfo info = MinecraftClient.getInstance().getCurrentServerEntry();
+        if (info == null || info.address == null) {
+            return null;
+        }
+        return normalize(info.address);
+    }
+
+    private static boolean matches(String current, String entry) {
+        return current.equals(entry) || current.endsWith("." + entry);
+    }
+
+    /** 今のサーバーで Optimizer を止める設定になっているか */
+    public static boolean isServerBlocked() {
+        String current = currentServerAddress();
+        if (current == null) {
+            return false;
+        }
+        for (String entry : disabledServers) {
+            if (matches(current, entry)) {
+                return true;
             }
         }
-        if (bottom < 0) {
-            bottom = height / 4 + 48 + 72 + 12 + BUTTON_HEIGHT;
+        return false;
+    }
+
+    /** 今のサーバーの止める/止めないを切り替える。サーバーにつないでいないときは何もしない */
+    public static void toggleCurrentServerBlocked() {
+        String current = currentServerAddress();
+        if (current == null) {
+            return;
         }
+        if (isServerBlocked()) {
+            disabledServers.removeIf(entry -> matches(current, entry));
+        } else {
+            disabledServers.add(current);
+        }
+        save();
+    }
 
-        int y = Math.min(bottom + GAP, height - BUTTON_HEIGHT - GAP);
+    public static void load() {
+        Path path = file();
+        if (!Files.exists(path)) {
+            return;
+        }
+        Properties props = new Properties();
+        try (InputStream in = Files.newInputStream(path)) {
+            props.load(in);
+            modEnabled = Boolean.parseBoolean(props.getProperty("modEnabled", "true"));
+            blurEnabled = Boolean.parseBoolean(props.getProperty("blurEnabled", "true"));
+            logoEnabled = Boolean.parseBoolean(props.getProperty("logoEnabled", "true"));
+            crystalOptimizerEnabled = Boolean.parseBoolean(props.getProperty("crystalOptimizerEnabled", "true"));
+            anchorOptimizerEnabled = Boolean.parseBoolean(props.getProperty("anchorOptimizerEnabled", "true"));
 
-        Screens.getButtons(screen).add(
-                ButtonWidget.builder(Text.literal("PVPBattles"), b -> PVPBattlesScreens.open())
-                        .dimensions(left, y, BUTTON_WIDTH, BUTTON_HEIGHT)
-                        .build()
-        );
+            disabledServers.clear();
+            for (String part : props.getProperty("disabledServers", "").split(",")) {
+                String entry = part.trim();
+                if (!entry.isEmpty()) {
+                    disabledServers.add(normalize(entry));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void save() {
+        Properties props = new Properties();
+        props.setProperty("modEnabled", Boolean.toString(modEnabled));
+        props.setProperty("blurEnabled", Boolean.toString(blurEnabled));
+        props.setProperty("logoEnabled", Boolean.toString(logoEnabled));
+        props.setProperty("crystalOptimizerEnabled", Boolean.toString(crystalOptimizerEnabled));
+        props.setProperty("anchorOptimizerEnabled", Boolean.toString(anchorOptimizerEnabled));
+        props.setProperty("disabledServers", String.join(",", disabledServers));
+        try (OutputStream out = Files.newOutputStream(file())) {
+            props.store(out, "PVPBattles");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
