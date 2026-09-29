@@ -20,6 +20,10 @@ public final class PVPBattlesCrystalOptimizer {
             if (!PVPBattlesConfig.modEnabled || !PVPBattlesConfig.crystalOptimizerEnabled) {
                 return ActionResult.PASS;
             }
+            // 禁止に設定したサーバーでは動かさない
+            if (PVPBattlesConfig.isServerBlocked()) {
+                return ActionResult.PASS;
+            }
             if (!(entity instanceof EndCrystalEntity) || !(world instanceof ClientWorld clientWorld)) {
                 return ActionResult.PASS;
             }
