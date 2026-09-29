@@ -3,6 +3,7 @@ package net.pvpbattles.client;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.SliderWidget;
 import net.minecraft.text.Text;
 
 import java.util.function.BooleanSupplier;
@@ -19,6 +20,29 @@ public class PVPBattlesCategoryScreen extends Screen {
 
         Category(String label) {
             this.label = label;
+        }
+    }
+
+    /** ぼかしの強さ (0〜10) のスライダー */
+    private static class BlurSlider extends SliderWidget {
+        BlurSlider(int x, int y, int width, int height) {
+            super(x, y, width, height, Text.empty(),
+                    PVPBattlesConfig.blurStrength / (double) PVPBattlesConfig.MAX_BLUR_STRENGTH);
+            updateMessage();
+        }
+
+        @Override
+        protected void updateMessage() {
+            int strength = (int) Math.round(this.value * PVPBattlesConfig.MAX_BLUR_STRENGTH);
+            this.setMessage(Text.literal("Blur Strength: " + strength));
+        }
+
+        @Override
+        protected void applyValue() {
+            int strength = (int) Math.round(this.value * PVPBattlesConfig.MAX_BLUR_STRENGTH);
+            PVPBattlesConfig.blurStrength = strength;
+            // 1刻みにそろえる
+            this.value = strength / (double) PVPBattlesConfig.MAX_BLUR_STRENGTH;
         }
     }
 
@@ -88,10 +112,11 @@ public class PVPBattlesCategoryScreen extends Screen {
                     () -> PVPBattlesConfig.blurEnabled,
                     v -> PVPBattlesConfig.blurEnabled = v,
                     x, y, w);
+            this.addDrawableChild(new BlurSlider(x, y + 24, w, 20));
             addToggle("Logo",
                     () -> PVPBattlesConfig.logoEnabled,
                     v -> PVPBattlesConfig.logoEnabled = v,
-                    x, y + 24, w);
+                    x, y + 48, w);
         }
 
         this.addDrawableChild(
@@ -108,6 +133,13 @@ public class PVPBattlesCategoryScreen extends Screen {
         if (category == Category.HUD || category == Category.GAMEPLAY) {
             context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Coming soon"), this.width / 2, this.height / 2, 0xFFAAAAAA);
         }
+    }
+
+    @Override
+    public void removed() {
+        // スライダーの値は、画面を閉じるときに保存する
+        PVPBattlesConfig.save();
+        super.removed();
     }
 
     @Override
