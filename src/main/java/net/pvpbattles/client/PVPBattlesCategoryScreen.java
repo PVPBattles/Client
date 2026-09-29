@@ -5,6 +5,9 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+
 public class PVPBattlesCategoryScreen extends Screen {
     public enum Category {
         OPTIMIZATION("Optimization"),
@@ -33,31 +36,44 @@ public class PVPBattlesCategoryScreen extends Screen {
         return Text.literal(name + ": " + (value ? "ON" : "OFF"));
     }
 
+    private void addToggle(String name, BooleanSupplier getter, Consumer<Boolean> setter, int x, int y, int w) {
+        this.addDrawableChild(
+                ButtonWidget.builder(toggleText(name, getter.getAsBoolean()), b -> {
+                            setter.accept(!getter.getAsBoolean());
+                            PVPBattlesConfig.save();
+                            b.setMessage(toggleText(name, getter.getAsBoolean()));
+                        })
+                        .dimensions(x, y, w, 20)
+                        .build()
+        );
+    }
+
     @Override
     protected void init() {
         int w = Math.min(200, this.width - 40);
         int x = this.width / 2 - w / 2;
         int y = Math.max(50, this.height / 4 + 10);
 
+        if (category == Category.OPTIMIZATION) {
+            addToggle("Crystal Optimizer",
+                    () -> PVPBattlesConfig.crystalOptimizerEnabled,
+                    v -> PVPBattlesConfig.crystalOptimizerEnabled = v,
+                    x, y, w);
+            addToggle("Anchor Optimizer",
+                    () -> PVPBattlesConfig.anchorOptimizerEnabled,
+                    v -> PVPBattlesConfig.anchorOptimizerEnabled = v,
+                    x, y + 24, w);
+        }
+
         if (category == Category.SCREEN) {
-            this.addDrawableChild(
-                    ButtonWidget.builder(toggleText("Blur", PVPBattlesConfig.blurEnabled), b -> {
-                                PVPBattlesConfig.blurEnabled = !PVPBattlesConfig.blurEnabled;
-                                PVPBattlesConfig.save();
-                                b.setMessage(toggleText("Blur", PVPBattlesConfig.blurEnabled));
-                            })
-                            .dimensions(x, y, w, 20)
-                            .build()
-            );
-            this.addDrawableChild(
-                    ButtonWidget.builder(toggleText("Logo", PVPBattlesConfig.logoEnabled), b -> {
-                                PVPBattlesConfig.logoEnabled = !PVPBattlesConfig.logoEnabled;
-                                PVPBattlesConfig.save();
-                                b.setMessage(toggleText("Logo", PVPBattlesConfig.logoEnabled));
-                            })
-                            .dimensions(x, y + 24, w, 20)
-                            .build()
-            );
+            addToggle("Blur",
+                    () -> PVPBattlesConfig.blurEnabled,
+                    v -> PVPBattlesConfig.blurEnabled = v,
+                    x, y, w);
+            addToggle("Logo",
+                    () -> PVPBattlesConfig.logoEnabled,
+                    v -> PVPBattlesConfig.logoEnabled = v,
+                    x, y + 24, w);
         }
 
         this.addDrawableChild(
@@ -71,7 +87,7 @@ public class PVPBattlesCategoryScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, Math.max(20, this.height / 4 - 15), BRAND_COLOR);
-        if (category != Category.SCREEN) {
+        if (category == Category.HUD) {
             context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Coming soon"), this.width / 2, this.height / 2, 0xFFAAAAAA);
         }
     }
