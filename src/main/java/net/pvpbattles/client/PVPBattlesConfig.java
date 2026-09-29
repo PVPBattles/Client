@@ -15,10 +15,12 @@ import java.util.Properties;
 import java.util.Set;
 
 public final class PVPBattlesConfig {
+    public static final int MAX_BLUR_STRENGTH = 10;
+
     public static boolean modEnabled = true;
     public static boolean blurEnabled = true;
-    /** ぼかしの強さ 0〜100 */
-    public static int blurStrength = 50;
+    /** ぼかしの強さ 0〜10 (Minecraft標準と同じ段階) */
+    public static int blurStrength = 5;
     public static boolean logoEnabled = true;
     public static boolean crystalOptimizerEnabled = true;
     public static boolean anchorOptimizerEnabled = true;
@@ -97,10 +99,14 @@ public final class PVPBattlesConfig {
             anchorOptimizerEnabled = Boolean.parseBoolean(props.getProperty("anchorOptimizerEnabled", "true"));
 
             try {
-                int strength = Integer.parseInt(props.getProperty("blurStrength", "50").trim());
-                blurStrength = Math.max(0, Math.min(100, strength));
+                int strength = Integer.parseInt(props.getProperty("blurStrength", "5").trim());
+                // 以前の 0〜100 の値が残っていたら 0〜10 に直す
+                if (strength > MAX_BLUR_STRENGTH) {
+                    strength = Math.round(strength / 10.0F);
+                }
+                blurStrength = Math.max(0, Math.min(MAX_BLUR_STRENGTH, strength));
             } catch (NumberFormatException e) {
-                blurStrength = 50;
+                blurStrength = 5;
             }
 
             disabledServers.clear();
