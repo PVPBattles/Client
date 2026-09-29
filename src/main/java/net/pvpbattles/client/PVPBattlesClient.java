@@ -18,6 +18,8 @@ public class PVPBattlesClient implements ClientModInitializer {
     public void onInitializeClient() {
         PVPBattlesConfig.load();
         PVPBattlesKeybinds.register();
+        PVPBattlesCrystalOptimizer.register();
+        PVPBattlesAnchorOptimizer.register();
 
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             ScreenEvents.beforeRender(screen).register((s, context, mouseX, mouseY, delta) ->
