@@ -16,9 +16,13 @@ public class PVPBattlesClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        PVPBattlesConfig.load();
         PVPBattlesKeybinds.register();
 
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            ScreenEvents.beforeRender(screen).register((s, context, mouseX, mouseY, delta) ->
+                    PVPBattlesBlur.apply(s, context));
+
             ScreenEvents.afterRender(screen).register((s, context, mouseX, mouseY, delta) ->
                     PVPBattlesOverlay.render(context, s.width, s.height));
 
@@ -32,7 +36,6 @@ public class PVPBattlesClient implements ClientModInitializer {
         int left = width / 2 - BUTTON_WIDTH / 2;
         int right = left + BUTTON_WIDTH;
 
-        // 中央カラムにある既存ボタン (Options / Quit の行を含む) の一番下を探す
         int bottom = -1;
         for (ClickableWidget w : Screens.getButtons(screen)) {
             boolean inCenterColumn = w.getX() < right && w.getX() + w.getWidth() > left;
@@ -44,7 +47,6 @@ public class PVPBattlesClient implements ClientModInitializer {
             bottom = height / 4 + 48 + 72 + 12 + BUTTON_HEIGHT;
         }
 
-        // 画面外に出ないように補正
         int y = Math.min(bottom + GAP, height - BUTTON_HEIGHT - GAP);
 
         Screens.getButtons(screen).add(
