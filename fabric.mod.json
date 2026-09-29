@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "pvpbattles",
+  "version": "${version}",
+  "name": "PVPBattles",
+  "description": "PVPBattles client-side UI enhancements.",
+  "authors": [
+    "NaruMaroMC"
+  ],
+  "icon": "assets/pvpbattles/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.pvpbattles.client.PVPBattlesClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "1.21.11",
+    "fabric-api": "*"
+  }
+}
