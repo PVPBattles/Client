@@ -20,6 +20,9 @@ public final class PVPBattlesOverlay {
     private PVPBattlesOverlay() {}
 
     public static void render(DrawContext context, int screenWidth, int screenHeight) {
+        if (!PVPBattlesConfig.modEnabled || !PVPBattlesConfig.logoEnabled) {
+            return;
+        }
         if (screenWidth < LOGO_WIDTH + MARGIN * 2 || screenHeight < LOGO_HEIGHT + MARGIN * 2) {
             return;
         }
