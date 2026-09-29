@@ -25,6 +25,10 @@ public final class PVPBattlesAnchorOptimizer {
             if (!PVPBattlesConfig.modEnabled || !PVPBattlesConfig.anchorOptimizerEnabled) {
                 return ActionResult.PASS;
             }
+            // 禁止に設定したサーバーでは動かさない
+            if (PVPBattlesConfig.isServerBlocked()) {
+                return ActionResult.PASS;
+            }
             if (player.isSpectator()) {
                 return ActionResult.PASS;
             }
