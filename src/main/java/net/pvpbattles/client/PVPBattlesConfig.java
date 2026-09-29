@@ -17,6 +17,8 @@ import java.util.Set;
 public final class PVPBattlesConfig {
     public static boolean modEnabled = true;
     public static boolean blurEnabled = true;
+    /** ぼかしの強さ 0〜100 */
+    public static int blurStrength = 50;
     public static boolean logoEnabled = true;
     public static boolean crystalOptimizerEnabled = true;
     public static boolean anchorOptimizerEnabled = true;
@@ -94,6 +96,13 @@ public final class PVPBattlesConfig {
             crystalOptimizerEnabled = Boolean.parseBoolean(props.getProperty("crystalOptimizerEnabled", "true"));
             anchorOptimizerEnabled = Boolean.parseBoolean(props.getProperty("anchorOptimizerEnabled", "true"));
 
+            try {
+                int strength = Integer.parseInt(props.getProperty("blurStrength", "50").trim());
+                blurStrength = Math.max(0, Math.min(100, strength));
+            } catch (NumberFormatException e) {
+                blurStrength = 50;
+            }
+
             disabledServers.clear();
             for (String part : props.getProperty("disabledServers", "").split(",")) {
                 String entry = part.trim();
@@ -110,6 +119,7 @@ public final class PVPBattlesConfig {
         Properties props = new Properties();
         props.setProperty("modEnabled", Boolean.toString(modEnabled));
         props.setProperty("blurEnabled", Boolean.toString(blurEnabled));
+        props.setProperty("blurStrength", Integer.toString(blurStrength));
         props.setProperty("logoEnabled", Boolean.toString(logoEnabled));
         props.setProperty("crystalOptimizerEnabled", Boolean.toString(crystalOptimizerEnabled));
         props.setProperty("anchorOptimizerEnabled", Boolean.toString(anchorOptimizerEnabled));
