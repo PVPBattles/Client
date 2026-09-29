@@ -3,6 +3,7 @@ package net.pvpbattles.client;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -27,7 +28,7 @@ public class PVPBattlesClient implements ClientModInitializer {
         });
     }
 
-    private static void addTitleButton(TitleScreen screen, int width, int height) {
+    private static void addTitleButton(Screen screen, int width, int height) {
         int left = width / 2 - BUTTON_WIDTH / 2;
         int right = left + BUTTON_WIDTH;
 
