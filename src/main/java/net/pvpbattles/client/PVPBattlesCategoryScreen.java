@@ -107,6 +107,21 @@ public class PVPBattlesCategoryScreen extends Screen {
             this.addDrawableChild(serverButton);
         }
 
+        if (category == Category.HUD) {
+            addToggle("FPS",
+                    () -> PVPBattlesConfig.hudFpsEnabled,
+                    v -> PVPBattlesConfig.hudFpsEnabled = v,
+                    x, y, w);
+            addToggle("CPS",
+                    () -> PVPBattlesConfig.hudCpsEnabled,
+                    v -> PVPBattlesConfig.hudCpsEnabled = v,
+                    x, y + 24, w);
+            addToggle("Ping",
+                    () -> PVPBattlesConfig.hudPingEnabled,
+                    v -> PVPBattlesConfig.hudPingEnabled = v,
+                    x, y + 48, w);
+        }
+
         if (category == Category.SCREEN) {
             addToggle("Blur",
                     () -> PVPBattlesConfig.blurEnabled,
@@ -117,6 +132,13 @@ public class PVPBattlesCategoryScreen extends Screen {
                     () -> PVPBattlesConfig.logoEnabled,
                     v -> PVPBattlesConfig.logoEnabled = v,
                     x, y + 48, w);
+        }
+
+        if (category == Category.GAMEPLAY) {
+            addToggle("Toggle Sprint",
+                    () -> PVPBattlesConfig.toggleSprintEnabled,
+                    v -> PVPBattlesConfig.toggleSprintEnabled = v,
+                    x, y, w);
         }
 
         this.addDrawableChild(
@@ -130,9 +152,6 @@ public class PVPBattlesCategoryScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, Math.max(20, this.height / 4 - 15), BRAND_COLOR);
-        if (category == Category.HUD || category == Category.GAMEPLAY) {
-            context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Coming soon"), this.width / 2, this.height / 2, 0xFFAAAAAA);
-        }
     }
 
     @Override
