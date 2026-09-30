@@ -12,8 +12,13 @@ public final class PVPBattlesKeybinds {
             KeyBinding.Category.create(Identifier.of("pvpbattles", "keybinds"));
 
     private static KeyBinding openMenu;
+    private static KeyBinding toggleSprint;
 
     private PVPBattlesKeybinds() {}
+
+    public static KeyBinding getToggleSprintKey() {
+        return toggleSprint;
+    }
 
     public static void register() {
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -23,8 +28,17 @@ public final class PVPBattlesKeybinds {
                 CATEGORY
         ));
 
+        // 初期設定は未設定。キー割り当てから好きなキーを選ぶ
+        toggleSprint = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.pvpbattles.toggle_sprint",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_UNKNOWN,
+                CATEGORY
+        ));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openMenu.wasPressed()) {
+                // 他の画面 (チャット等) が開いている間は開かない
                 if (client.currentScreen == null) {
                     PVPBattlesScreens.open();
                 }
