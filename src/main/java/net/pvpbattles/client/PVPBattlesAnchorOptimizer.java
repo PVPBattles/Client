@@ -1,5 +1,6 @@
 package net.pvpbattles.client;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -13,6 +14,9 @@ import net.minecraft.world.World;
 
 public final class PVPBattlesAnchorOptimizer {
     private static final int MAX_CHARGES = 4;
+
+    /** 爆発する操作をしたアンカーの位置 (操作が終わったあとで消す) */
+    private static BlockPos pendingExplosion = null;
 
     private PVPBattlesAnchorOptimizer() {}
 
@@ -48,26 +52,36 @@ public final class PVPBattlesAnchorOptimizer {
             int charges = state.get(RespawnAnchorBlock.CHARGES);
             boolean holdingGlowstone = player.getStackInHand(hand).isOf(Items.GLOWSTONE);
 
-            // グロウストーンでチャージ: チャージを1つ増やす
+            // チャージされる操作は、Minecraft本体がクライアント側で先に反映するので、何もしない
             if (holdingGlowstone && charges < MAX_CHARGES) {
-                world.setBlockState(pos, state.with(RespawnAnchorBlock.CHARGES, charges + 1), Block.NOTIFY_ALL);
                 return ActionResult.PASS;
             }
-
-            // メインハンドが別の物で、オフハンドのグロウストーンがチャージする場合は、オフハンドに任せる
             if (hand == Hand.MAIN_HAND
                     && player.getOffHandStack().isOf(Items.GLOWSTONE)
                     && charges < MAX_CHARGES) {
                 return ActionResult.PASS;
             }
 
-            // ネザー以外でチャージ済みのアンカーを使うと爆発する: 先にアンカーを消す
+            // ネザー以外でチャージ済みのアンカーを使うと爆発する: 操作が終わったあとにアンカーを消す
             if (charges > 0 && !World.NETHER.equals(world.getRegistryKey())) {
-                world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                pendingExplosion = pos.toImmutable();
             }
 
             // 操作パケットは通常どおり送る (最終結果はサーバーが決める)
             return ActionResult.PASS;
+        });
+
+        // 操作の処理が終わったあと、同じtickの最後にアンカーを消す
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            BlockPos pos = pendingExplosion;
+            if (pos == null) {
+                return;
+            }
+            pendingExplosion = null;
+
+            if (client.world != null && client.world.getBlockState(pos).isOf(Blocks.RESPAWN_ANCHOR)) {
+                client.world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+            }
         });
     }
 }
