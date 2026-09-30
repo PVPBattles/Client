@@ -1,6 +1,7 @@
 {
   "key.category.pvpbattles.keybinds": "PVPBattles",
   "key.pvpbattles.menu": "PVPBattles Menu",
+  "key.pvpbattles.toggle_sprint": "PVPBattles Toggle Sprint",
   "pvpbattles.screen.title": "PVPBattles",
   "pvpbattles.screen.close": "Close"
 }
