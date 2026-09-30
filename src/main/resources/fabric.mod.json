@@ -3,7 +3,7 @@
   "id": "pvpbattles",
   "version": "${version}",
   "name": "PVPBattles",
-  "description": "PVPBattles Official Client MOD",
+  "description": "PVPBattles client-side UI enhancements.",
   "authors": [
     "NaruMaroMC"
   ],
@@ -14,6 +14,9 @@
       "net.pvpbattles.client.PVPBattlesClient"
     ]
   },
+  "mixins": [
+    "pvpbattles.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.19.3",
     "minecraft": "1.21.11",
