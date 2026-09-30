@@ -20,6 +20,8 @@ public class PVPBattlesClient implements ClientModInitializer {
         PVPBattlesKeybinds.register();
         PVPBattlesCrystalOptimizer.register();
         PVPBattlesAnchorOptimizer.register();
+        PVPBattlesToggleSprint.register();
+        PVPBattlesHud.register();
 
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             ScreenEvents.beforeRender(screen).register((s, context, mouseX, mouseY, delta) ->
@@ -39,39 +41,22 @@ public class PVPBattlesClient implements ClientModInitializer {
         int right = left + BUTTON_WIDTH;
 
         int bottom = -1;
-
         for (ClickableWidget w : Screens.getButtons(screen)) {
-            boolean inCenterColumn =
-                    w.getX() < right &&
-                    w.getX() + w.getWidth() > left;
-
+            boolean inCenterColumn = w.getX() < right && w.getX() + w.getWidth() > left;
             if (inCenterColumn) {
-                bottom = Math.max(
-                        bottom,
-                        w.getY() + w.getHeight()
-                );
+                bottom = Math.max(bottom, w.getY() + w.getHeight());
             }
         }
-
         if (bottom < 0) {
             bottom = height / 4 + 48 + 72 + 12 + BUTTON_HEIGHT;
         }
 
-        int y = Math.min(
-                bottom + GAP,
-                height - BUTTON_HEIGHT - GAP
-        );
+        int y = Math.min(bottom + GAP, height - BUTTON_HEIGHT - GAP);
 
         Screens.getButtons(screen).add(
-                ButtonWidget.builder(
-                        Text.literal("PVPBattles"),
-                        button -> PVPBattlesScreens.open()
-                ).dimensions(
-                        left,
-                        y,
-                        BUTTON_WIDTH,
-                        BUTTON_HEIGHT
-                ).build()
+                ButtonWidget.builder(Text.literal("PVPBattles"), b -> PVPBattlesScreens.open())
+                        .dimensions(left, y, BUTTON_WIDTH, BUTTON_HEIGHT)
+                        .build()
         );
     }
 }
