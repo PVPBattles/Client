@@ -24,6 +24,7 @@ public final class PVPBattlesConfig {
     public static boolean logoEnabled = true;
     public static boolean crystalOptimizerEnabled = true;
     public static boolean anchorOptimizerEnabled = true;
+    public static boolean toggleSprintEnabled = true;
 
     /** Optimizer を止めるサーバーのアドレス (小文字、ポートなし) */
     public static final Set<String> disabledServers = new LinkedHashSet<>();
@@ -97,6 +98,7 @@ public final class PVPBattlesConfig {
             logoEnabled = Boolean.parseBoolean(props.getProperty("logoEnabled", "true"));
             crystalOptimizerEnabled = Boolean.parseBoolean(props.getProperty("crystalOptimizerEnabled", "true"));
             anchorOptimizerEnabled = Boolean.parseBoolean(props.getProperty("anchorOptimizerEnabled", "true"));
+            toggleSprintEnabled = Boolean.parseBoolean(props.getProperty("toggleSprintEnabled", "true"));
 
             try {
                 int strength = Integer.parseInt(props.getProperty("blurStrength", "5").trim());
@@ -129,6 +131,7 @@ public final class PVPBattlesConfig {
         props.setProperty("logoEnabled", Boolean.toString(logoEnabled));
         props.setProperty("crystalOptimizerEnabled", Boolean.toString(crystalOptimizerEnabled));
         props.setProperty("anchorOptimizerEnabled", Boolean.toString(anchorOptimizerEnabled));
+        props.setProperty("toggleSprintEnabled", Boolean.toString(toggleSprintEnabled));
         props.setProperty("disabledServers", String.join(",", disabledServers));
         try (OutputStream out = Files.newOutputStream(file())) {
             props.store(out, "PVPBattles");
