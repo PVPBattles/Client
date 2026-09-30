@@ -26,6 +26,10 @@ public final class PVPBattlesConfig {
     public static boolean anchorOptimizerEnabled = true;
     public static boolean toggleSprintEnabled = true;
 
+    public static boolean hudFpsEnabled = true;
+    public static boolean hudCpsEnabled = true;
+    public static boolean hudPingEnabled = true;
+
     /** Optimizer を止めるサーバーのアドレス (小文字、ポートなし) */
     public static final Set<String> disabledServers = new LinkedHashSet<>();
 
@@ -99,6 +103,9 @@ public final class PVPBattlesConfig {
             crystalOptimizerEnabled = Boolean.parseBoolean(props.getProperty("crystalOptimizerEnabled", "true"));
             anchorOptimizerEnabled = Boolean.parseBoolean(props.getProperty("anchorOptimizerEnabled", "true"));
             toggleSprintEnabled = Boolean.parseBoolean(props.getProperty("toggleSprintEnabled", "true"));
+            hudFpsEnabled = Boolean.parseBoolean(props.getProperty("hudFpsEnabled", "true"));
+            hudCpsEnabled = Boolean.parseBoolean(props.getProperty("hudCpsEnabled", "true"));
+            hudPingEnabled = Boolean.parseBoolean(props.getProperty("hudPingEnabled", "true"));
 
             try {
                 int strength = Integer.parseInt(props.getProperty("blurStrength", "5").trim());
@@ -132,6 +139,9 @@ public final class PVPBattlesConfig {
         props.setProperty("crystalOptimizerEnabled", Boolean.toString(crystalOptimizerEnabled));
         props.setProperty("anchorOptimizerEnabled", Boolean.toString(anchorOptimizerEnabled));
         props.setProperty("toggleSprintEnabled", Boolean.toString(toggleSprintEnabled));
+        props.setProperty("hudFpsEnabled", Boolean.toString(hudFpsEnabled));
+        props.setProperty("hudCpsEnabled", Boolean.toString(hudCpsEnabled));
+        props.setProperty("hudPingEnabled", Boolean.toString(hudPingEnabled));
         props.setProperty("disabledServers", String.join(",", disabledServers));
         try (OutputStream out = Files.newOutputStream(file())) {
             props.store(out, "PVPBattles");
