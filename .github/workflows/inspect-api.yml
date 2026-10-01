@@ -1,0 +1,67 @@
+name: Inspect API
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.2.1
+
+      - name: Download Minecraft (compile may fail, that is fine)
+        run: gradle compileJava --no-daemon || true
+
+      - name: Find the named Minecraft jar
+        id: find
+        run: |
+          FOUND=""
+          for J in $(find "$HOME/.gradle" -type f -name "*.jar" | grep -i "minecraft" | grep -vi "sources"); do
+            if unzip -l "$J" 2>/dev/null | grep -q "net/minecraft/client/MinecraftClient.class"; then
+              echo "candidate: $J"
+              FOUND="$J"
+            fi
+          done
+          echo "JAR=$FOUND"
+          echo "jar=$FOUND" >> "$GITHUB_OUTPUT"
+
+      - name: Hitbox related members in Minecraft
+        run: |
+          JAR="${{ steps.find.outputs.jar }}"
+          if [ -z "$JAR" ]; then echo "named jar not found"; exit 0; fi
+          CLASSES=$(unzip -l "$JAR" | awk '{print $4}' | grep -E '^net/minecraft/client/(render|gui|option)/.*\.class$' | grep -v '\$' | sed 's/\.class$//; s#/#.#g')
+          javap -p -cp "$JAR" $CLASSES 2>/dev/null | awk '/^(public |final |abstract |class |interface |enum )/ && /(class|interface|enum) / {cur=$0; shown=0} tolower($0) ~ /hitbox/ { if(!shown){print "=== " cur; shown=1} print $0 }'
+
+      - name: Entity render and debug classes
+        run: |
+          JAR="${{ steps.find.outputs.jar }}"
+          if [ -z "$JAR" ]; then exit 0; fi
+          echo "=== class names"
+          unzip -l "$JAR" | awk '{print $4}' | grep -E "net/minecraft/client/render/(entity|debug)/" | grep -iE "Dispatcher|Manager|Debug|Hitbox|EntityRenderState" | head -60
+          for c in $(unzip -l "$JAR" | awk '{print $4}' | grep -E "net/minecraft/client/render/entity/EntityRender(Manager|Dispatcher)\.class$" | sed 's/\.class$//; s#/#.#g'); do
+            echo "=== $c"
+            javap -public -cp "$JAR" "$c" | head -60
+          done
+
+      - name: Fabric rendering events
+        run: |
+          MC="${{ steps.find.outputs.jar }}"
+          FR=$(find "$HOME/.gradle" -type f -name "fabric-rendering-v1*.jar" | grep -vi sources | head -1)
+          echo "FR=$FR"
+          if [ -z "$FR" ]; then exit 0; fi
+          for c in net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext; do
+            if unzip -l "$FR" | grep -q "$(echo $c | sed 's#\.#/#g').class"; then
+              echo "=== $c"
+              javap -public -cp "$FR:$MC" "$c" | head -60
+            fi
+          done
